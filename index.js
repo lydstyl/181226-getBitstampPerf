@@ -69,11 +69,14 @@ csv()
             trade.avgSellRate = trade.avgSellRate / trade.sellRates.length
             trade.buyRates.forEach( buyRate => {
                 trade.avgBuyRate += buyRate
-            });
-            trade.avgBuyRate = trade.avgBuyRate / trade.sellRates.length
+            })
+            //trade.avgBuyRate -= trade.fee
+            trade.avgBuyRate = trade.avgBuyRate / trade.buyRates.length
+            perfs[pair].start = trade.begin
+            perfs[pair].finish = trade.end
             perfs[pair].avgSell = trade.avgSellRate
             perfs[pair].avgBuy = trade.avgBuyRate
-            perfs[pair].percent = ( (trade.avgSellRate / trade.avgBuyRate) - 1 ) * 100
+            perfs[pair].perfWithoutFee = ( (trade.avgSellRate / trade.avgBuyRate) - 1 ) * 100
             console.log(trade);
         } 
         
