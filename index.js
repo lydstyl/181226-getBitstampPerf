@@ -1,4 +1,5 @@
 const csv = require('csvtojson')
+const fs = require('fs')
 const opts = require('./opts')
 const csvFilePath = './Transactions.csv' // transactions.csv from bitstamp
 const trades = {}
@@ -23,9 +24,6 @@ csv()
                 trades[cur].fee = 0
                 trades[cur].val = 0
                 trades[cur].begin = trades[cur].end = transaction.Datetime 
-
-                // console.log(trades);
-                // console.log(trades.Rate); // moyenne vente sur moyenne achat
                 trades[cur].buyRates = []
                 trades[cur].avgBuyRate = 0
                 trades[cur].sellRates = []
@@ -52,8 +50,8 @@ csv()
             trades[cur].fee = trades[cur].fee + Number.parseFloat( transaction.Fee.split(' ')[0] )
         }
     })
-    // console.log( JSON.stringify(trades, null, 4));
     perfs = {} 
+    perfsToPaste = `START;FINISH;PAIR;AVG-BUY;AVG-SELL;PERF-NO-FEE;GAIN-WITH-FEES\n`
     Object.keys(trades).forEach( pair => {
         const trade = trades[pair]
         if ( (trade.qty.buyMinusSell / trade.qty.buy) <= 0.01 ) {
@@ -61,26 +59,24 @@ csv()
                 perfs[pair] = {}
             }
             perfs[pair].gainMinusFees = trade.val - trade.fee
-            // //  on veut pourcentPerf, begin date et end date et duration
-            
             trade.sellRates.forEach( sellRate => {
                 trade.avgSellRate += sellRate
-            });
+            })
             trade.avgSellRate = trade.avgSellRate / trade.sellRates.length
             trade.buyRates.forEach( buyRate => {
                 trade.avgBuyRate += buyRate
             })
-            //trade.avgBuyRate -= trade.fee
             trade.avgBuyRate = trade.avgBuyRate / trade.buyRates.length
             perfs[pair].start = trade.begin
             perfs[pair].finish = trade.end
             perfs[pair].avgSell = trade.avgSellRate
             perfs[pair].avgBuy = trade.avgBuyRate
             perfs[pair].perfWithoutFee = ( (trade.avgSellRate / trade.avgBuyRate) - 1 ) * 100
-            console.log(trade);
+            perfsToPaste += `${perfs[pair].start};${perfs[pair].finish};${pair};${perfs[pair].avgBuy};${perfs[pair].avgSell};${perfs[pair].perfWithoutFee};${perfs[pair].gainMinusFees}\n`
         } 
-        
     })
-
-    console.log(perfs);
+    // console.log(perfs)
+    // console.log(perfsToPaste)
+    perfsToPaste = perfsToPaste.replace(/\./g,',')
+    fs.writeFileSync( 'perfsToPaste.csv', perfsToPaste, 'utf8' )
 })
